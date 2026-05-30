@@ -135,13 +135,18 @@ const SidebarItem = ({
   </button>
 );
 
-export default function App(supabase
-  .from('teachers')
-  .select('*')
-  .limit(1)
-  .then(({ data, error }) => {
-    console.log('SUPABASE TEST', data, error);
-  });) {
+export default function App() {
+
+  supabase
+    .from('teachers')
+    .select('*')
+    .limit(1)
+    .then(({ data, error }) => {
+      console.log('SUPABASE TEST', data, error)
+    })
+
+  // existing code below
+  
   const { auth, db, user, loading, initialized } = useFirebase();
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [directChat, setDirectChat] = useState<{ code: string; title: string } | null>(null);
