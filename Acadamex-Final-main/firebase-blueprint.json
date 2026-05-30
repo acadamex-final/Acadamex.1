@@ -1,0 +1,331 @@
+{
+  "entities": {
+    "College": {
+      "title": "College",
+      "description": "Represents a college or university campus.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the college" },
+        "city": { "type": "string", "description": "City where the college is located" },
+        "domain": { "type": "string", "description": "Email domain associated with the college (e.g., college.edu)" }
+      },
+      "required": ["name", "city"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "A teacher profile within a specific college.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the teacher" },
+        "subject": { "type": "string", "description": "Primary teaching subject" },
+        "collegeId": { "type": "string", "description": "ID of the college" },
+        "universityId": { "type": "string", "description": "ID of the university" },
+        "status": { "type": "string", "enum": ["pending", "active", "rejected"] },
+        "createdBy": { "type": "string" },
+        "createdByName": { "type": "string" },
+        "approvedAt": { "type": "number", "format": "timestamp" },
+        "averageRating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "pedagogyScore": { "type": "number" },
+        "strictnessScore": { "type": "number" },
+        "gradingScore": { "type": "number" },
+        "tags": { "type": "object", "description": "Map of tag names to vote counts" },
+        "createdAt": { "type": "number", "format": "timestamp" },
+        "updatedAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["name", "subject", "collegeId", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "A student review for a teacher.",
+      "type": "object",
+      "properties": {
+        "teacherId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rating": { "type": "number" },
+        "pedagogy": { "type": "number" },
+        "strictness": { "type": "number" },
+        "grading": { "type": "number" },
+        "content": { "type": "string" },
+        "semester": { "type": "string" },
+        "anonymous": { "type": "boolean" },
+        "tagsProvided": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["teacherId", "userId", "rating", "content", "createdAt"]
+    },
+    "MarketItem": {
+      "title": "MarketItem",
+      "description": "An item listed for sale in the campus marketplace.",
+      "type": "object",
+      "properties": {
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "sellerEmail": { "type": "string" },
+        "universityId": { "type": "string" },
+        "collegeId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "condition": { "type": "string" },
+        "contactInfo": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "sold", "expired"] },
+        "createdAt": { "type": "number", "format": "timestamp" },
+        "expiresAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["sellerId", "collegeId", "title", "price", "status"]
+    },
+    "NodeRegistry": {
+      "title": "NodeRegistry",
+      "description": "Registry of student nodes accessing the network.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "registeredAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "userEmail", "action", "registeredAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Public student profile.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "collegeId": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["name", "email"]
+    },
+    "DiscussionPost": {
+      "title": "DiscussionPost",
+      "description": "A post in the Peer Pulse community board.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "content": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "likes": { "type": "array", "items": { "type": "string" } },
+        "collegeId": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "content", "collegeId", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "A support request or issue raised by a student.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "subject": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "in-progress", "resolved", "closed"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "resolved": { "type": "boolean" },
+        "resolvedAt": { "type": "number", "format": "timestamp" },
+        "createdAt": { "type": "number", "format": "timestamp" },
+        "updatedAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "subject", "description", "status", "createdAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Indicates high-privilege access and administrative role status.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "UserRole": {
+      "title": "UserRole",
+      "description": "Custom verified tags, roles, and accolades granted to campus citizens.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "roles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "collegeId": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "updatedAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["email", "roles", "updatedAt"]
+    },
+    "AdminLog": {
+      "title": "AdminLog",
+      "description": "Log of high-privilege actions taken by administrators.",
+      "type": "object",
+      "properties": {
+        "adminId": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "adminName": { "type": "string" },
+        "actionType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetName": { "type": "string" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "object" }
+      },
+      "required": ["adminId", "adminEmail", "actionType", "targetId", "targetName", "description", "timestamp"]
+    },
+    "CollegeChangeRequest": {
+      "title": "CollegeChangeRequest",
+      "description": "Request by a user to change their college affiliation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "oldCollegeId": { "type": "string" },
+        "newCollegeId": { "type": "string" },
+        "idCardPhoto": { "type": "string", "description": "Base64 encoded string of the ID Card photo" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "number", "format": "timestamp" },
+        "updatedAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "userName", "userEmail", "oldCollegeId", "newCollegeId", "idCardPhoto", "status", "createdAt"]
+    },
+    "Placement": {
+      "title": "Placement",
+      "description": "Contains placement details and referral offerings from alumni.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "collegeId": { "type": "string" },
+        "company": { "type": "string" },
+        "role": { "type": "string" },
+        "type": { "type": "string", "enum": ["placement", "referral"] },
+        "status": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "userName", "company", "role", "type", "collegeId", "createdAt"]
+    },
+    "AcademicGig": {
+      "title": "AcademicGig",
+      "description": "Represents an academic assistance task listed for payment.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "payout": { "type": "number" },
+        "subject": { "type": "string" },
+        "collegeId": { "type": "string" },
+        "status": { "type": "string", "enum": ["available", "assigned", "completed"] },
+        "contactInfo": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["userId", "userName", "userEmail", "title", "description", "payout", "collegeId", "status", "createdAt"]
+    },
+    "ChatRoom": {
+      "title": "ChatRoom",
+      "description": "Private chat suite room identified by a short 6-character unique code.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "6-character unique room code" },
+        "title": { "type": "string", "description": "The custom title or description of the chat suite" },
+        "createdBy": { "type": "string" },
+        "createdByName": { "type": "string" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["id", "title", "createdBy", "createdByName", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual message in a private chat suite room.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderEmail": { "type": "string" },
+        "content": { "type": "string", "description": "The message text" },
+        "createdAt": { "type": "number", "format": "timestamp" }
+      },
+      "required": ["senderId", "senderName", "senderEmail", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "colleges/{collegeId}": {
+      "schema": "College",
+      "description": "List of all colleges on the platform."
+    },
+    "teachers/{teacherId}": {
+      "schema": "Teacher",
+      "description": "Teacher profiles and aggregate scores."
+    },
+    "reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Individual student reviews for a specific teacher."
+    },
+    "marketplace/{itemId}": {
+      "schema": "MarketItem",
+      "description": "Campus marketplace listings."
+    },
+    "posts/{postId}": {
+      "schema": "DiscussionPost",
+      "description": "Community discussion posts."
+    },
+    "tickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "Student-raised issues/support tickets."
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Student profile data."
+    },
+    "nodes/{nodeId}": {
+      "schema": "NodeRegistry",
+      "description": "Registry of student nodes accessing the network."
+    },
+    "admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Administrator nodes with high-privilege permissions."
+    },
+    "user_roles/{userId}": {
+      "schema": "UserRole",
+      "description": "Roles, tags, and accolades assigned to user nodes."
+    },
+    "admin_logs/{logId}": {
+      "schema": "AdminLog",
+      "description": "Logs of actions taken by administrative accounts."
+    },
+    "college_change_requests/{requestId}": {
+      "schema": "CollegeChangeRequest",
+      "description": "Requests to switch college affiliations with uploaded student ID cards."
+    },
+    "placements/{placementId}": {
+      "schema": "Placement",
+      "description": "Contains senior placement records and referral opportunities."
+    },
+    "academic_gigs/{gigId}": {
+      "schema": "AcademicGig",
+      "description": "Contains academic task commissions, assignments, and gig help requests."
+    },
+    "chat_rooms/{roomId}": {
+      "schema": "ChatRoom",
+      "description": "Private chat rooms created and joined using short 6-character alphanumeric codes."
+    },
+    "chat_rooms/{roomId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Individual messages typed by students in a private chat room."
+    }
+  }
+}

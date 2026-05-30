@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Remix: proper Acadamix",
+  "description": "A student-driven intelligence platform for college life. Features teacher reviews, crowdsourced academic tags, a student marketplace, and campus community boards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

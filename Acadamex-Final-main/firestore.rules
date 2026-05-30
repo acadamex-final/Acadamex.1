@@ -1,0 +1,234 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email == '237tanishaqverma@gmail.com' || request.auth.token.email != null); }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email == '237tanishaqverma@gmail.com' ||
+        (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
+      );
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    // --- Validation Blueprints ---
+    
+    function isValidTeacher(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 1000
+        && data.collegeId is string && isValidId(data.collegeId)
+        && data.universityId is string && isValidId(data.universityId)
+        && data.status in ['pending', 'active', 'rejected']
+        && (data.get('createdBy', '') is string)
+        && (data.get('createdByName', '') is string)
+        && (data.get('averageRating', 0) is number)
+        && (data.get('reviewCount', 0) is number)
+        && (data.get('pedagogyScore', 0) is number)
+        && (data.get('strictnessScore', 0) is number)
+        && (data.get('gradingScore', 0) is number)
+        && (data.get('createdAt', request.time) == request.time || data.createdAt is timestamp);
+    }
+
+    function isValidReview(data) {
+      return data.teacherId is string && isValidId(data.teacherId)
+        && data.userId == request.auth.uid
+        && data.rating is number && data.rating >= 1 && data.rating <= 10
+        && data.pedagogy is number && data.pedagogy >= 1 && data.pedagogy <= 10
+        && data.strictness is number && data.strictness >= 1 && data.strictness <= 10
+        && data.grading is number && data.grading >= 1 && data.grading <= 10
+        && data.content is string && data.content.size() <= 5000
+        && data.createdAt is number;
+    }
+
+    function isValidMarketItem(data) {
+      return data.sellerId == request.auth.uid
+        && data.collegeId is string && isValidId(data.collegeId)
+        && data.universityId is string && isValidId(data.universityId)
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.price is number && data.price >= 0
+        && data.status in ['available', 'sold', 'expired']
+        && data.createdAt is number
+        && data.expiresAt is number;
+    }
+
+    function isValidNode(data) {
+      return data.userId == request.auth.uid
+        && data.userEmail is string
+        && data.action is string
+        && data.registeredAt is number;
+    }
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() <= 100
+        && data.email == request.auth.token.email
+        && (data.get('collegeId', '') is string)
+        && data.createdAt == request.time;
+    }
+
+    function isValidPlacement(data) {
+      return data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 100
+        && data.company is string && data.company.size() > 0 && data.company.size() <= 100
+        && data.role is string && data.role.size() > 0 && data.role.size() <= 100
+        && data.type in ['placement', 'referral']
+        && (data.get('linkedin', '') is string)
+        && (data.get('status', '') is string)
+        && data.description is string && data.description.size() <= 3000
+        && data.collegeId is string && isValidId(data.collegeId)
+        && data.createdAt is number;
+    }
+
+    function isValidChatRoom(data) {
+      return data.id is string && data.id.size() >= 3 && data.id.size() <= 20
+        && data.title is string && data.title.size() <= 100
+        && data.createdBy is string
+        && data.createdByName is string
+        && data.createdAt is number;
+    }
+
+    function isValidChatMessage(data) {
+      return data.senderId == request.auth.uid
+        && data.senderName is string && data.senderName.size() <= 100
+        && data.senderEmail is string && data.senderEmail.size() <= 100
+        && data.content is string && data.content.size() <= 1000
+        && data.createdAt is number;
+    }
+
+    // --- Collections ---
+
+    match /colleges/{collegeId} {
+      allow read: if true; // Public list
+      allow write: if isAdmin();
+    }
+
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow create: if isVerified() 
+        && isValidTeacher(incoming())
+        && incoming().status == 'pending'
+        && incoming().reviewCount == 0;
+      
+      allow update: if isVerified() && (
+        isAdmin() ||
+        (isValidTeacher(incoming()) && incoming().status == existing().status && incoming().diff(existing()).affectedKeys().hasOnly(['subject', 'tags', 'averageRating', 'reviewCount', 'pedagogyScore', 'strictnessScore', 'gradingScore', 'updatedAt', 'approvedAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isVerified() 
+        && isValidReview(incoming())
+        && exists(/databases/$(database)/documents/teachers/$(incoming().teacherId));
+      allow update: if isVerified() && isOwner(existing().userId) && isValidReview(incoming())
+        && incoming().userId == existing().userId
+        && incoming().teacherId == existing().teacherId
+        && (incoming().updatedAt > existing().createdAt);
+      allow delete: if isVerified() && (isOwner(existing().userId) || isAdmin());
+    }
+
+    match /marketplace/{itemId} {
+      allow read: if true;
+      allow create: if isVerified() && isValidMarketItem(incoming());
+      allow update: if isVerified() 
+        && isOwner(existing().sellerId) 
+        && isValidMarketItem(incoming())
+        && incoming().sellerId == existing().sellerId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && (isOwner(existing().sellerId) || isAdmin());
+    }
+
+    match /posts/{postId} {
+      allow read: if isVerified();
+      allow create: if isVerified();
+      allow update: if isVerified() && incoming().diff(existing()).affectedKeys().hasOnly(['likes']);
+      allow delete: if isVerified() && (isOwner(existing().userId) || isAdmin());
+    }
+
+    match /placements/{placementId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidPlacement(incoming());
+      allow update: if isVerified() && isOwner(existing().userId) && isValidPlacement(incoming())
+        && incoming().userId == existing().userId
+        && incoming().collegeId == existing().collegeId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isVerified() && (isOwner(existing().userId) || isAdmin());
+    }
+
+    match /academic_gigs/{gigId} {
+      allow read: if isVerified();
+      allow create: if isVerified();
+      allow update: if isVerified() && (isOwner(existing().userId) || isAdmin());
+      allow delete: if isVerified() && (isOwner(existing().userId) || isAdmin());
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isVerified() && (isOwner(existing().userId) || isAdmin());
+      allow create: if isVerified();
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isVerified() && isOwner(userId) && isValidUser(incoming());
+      allow update: if isVerified() && isOwner(userId) && isValidUser(incoming())
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt;
+    }
+
+    match /nodes/{nodeId} {
+      allow create: if isSignedIn() && isValidNode(incoming());
+      allow read: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /user_roles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      allow create: if isVerified() && isOwner(userId) && (
+        incoming().get('roles', []) == []
+      );
+      allow update: if isVerified() && isOwner(userId) && (
+        incoming().get('roles', []) == existing().get('roles', []) &&
+        (incoming().get('collegeId', '') == existing().get('collegeId', '') || existing().get('collegeId', '') == '')
+      );
+    }
+
+    match /admin_logs/{logId} {
+      allow read, create: if isAdmin();
+    }
+
+    match /college_change_requests/{requestId} {
+      allow read: if isVerified() && (resource == null || isOwner(resource.data.userId) || isAdmin());
+      allow create: if isVerified() && incoming().userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /chat_rooms/{roomId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && isValidChatRoom(incoming()) && incoming().id == roomId;
+      allow update: if isVerified() && incoming().createdBy == existing().createdBy && incoming().createdAt == existing().createdAt && (incoming().diff(existing()).affectedKeys().hasOnly(['title']) || isAdmin());
+      allow delete: if isAdmin() || (isVerified() && existing().createdBy == request.auth.uid);
+
+      match /messages/{messageId} {
+        allow read: if isVerified() && exists(/databases/$(database)/documents/chat_rooms/$(roomId));
+        allow create: if isVerified() && isValidChatMessage(incoming()) && exists(/databases/$(database)/documents/chat_rooms/$(roomId));
+        allow update: if false;
+        allow delete: if isAdmin() || (isVerified() && existing().senderId == request.auth.uid);
+      }
+    }
+  }
+}
