@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import { supabase } from './services/supabase';
 import { useState, useEffect, FormEvent, ChangeEvent, DragEvent, useRef } from "react";
 import {
   Search,
@@ -135,7 +135,13 @@ const SidebarItem = ({
   </button>
 );
 
-export default function App() {
+export default function App(supabase
+  .from('teachers')
+  .select('*')
+  .limit(1)
+  .then(({ data, error }) => {
+    console.log('SUPABASE TEST', data, error);
+  });) {
   const { auth, db, user, loading, initialized } = useFirebase();
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [directChat, setDirectChat] = useState<{ code: string; title: string } | null>(null);
