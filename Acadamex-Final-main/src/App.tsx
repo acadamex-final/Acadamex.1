@@ -137,16 +137,23 @@ const SidebarItem = ({
 
 export default function App() {
 
-  supabase
-    .from('teachers')
-    .select('*')
-    .limit(1)
-    .then(({ data, error }) => {
-      console.log('SUPABASE TEST', data, error)
-    })
+  const exportTeachers = async () => {
+    try {
+      const teachersSnapshot = await getDocs(collection(db, "teachers"));
 
-  // existing code below
-  
+      const teachers = teachersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("TEACHERS EXPORT");
+      console.log(JSON.stringify(teachers, null, 2));
+
+      alert(`Exported ${teachers.length} teachers. Open Console (F12).`);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
   const { auth, db, user, loading, initialized } = useFirebase();
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [directChat, setDirectChat] = useState<{ code: string; title: string } | null>(null);
@@ -1496,12 +1503,21 @@ export default function App() {
                   )}
                 </AnimatePresence>
               </div>
-              <button
-                onClick={() => setShowAddTeacherModal(true)}
-                className="bg-white text-black p-2 hover:bg-zinc-200 transition-all rounded-none"
-              >
-                <Plus size={20} />
-              </button>
+              <div className="flex gap-2">
+  <button
+    onClick={exportTeachers}
+    className="bg-green-600 text-white px-3 py-2 text-xs"
+  >
+    EXPORT
+  </button>
+
+  <button
+    onClick={() => setShowAddTeacherModal(true)}
+    className="bg-white text-black p-2 hover:bg-zinc-200 transition-all rounded-none"
+  >
+    <Plus size={20} />
+  </button>
+</div>
             </div>
           </header>
 
